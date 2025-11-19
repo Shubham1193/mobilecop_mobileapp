@@ -1,24 +1,58 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import CommandOverlay from '@/components/CommandOverlay';
+import { CommandProvider } from '@/context/CommandContext';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { View } from 'react-native';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <CommandProvider>
+      <View style={{ flex: 1 }}>
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#007AFF',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen 
+        name="index" 
+        options={{ 
+          headerShown: false 
+        }} 
+      />
+      <Stack.Screen 
+        name="shops" 
+        options={{ 
+          title: 'Shops',
+          headerLeft: () => null, // Prevent back to welcome
+        }} 
+      />
+      <Stack.Screen 
+        name="review" 
+        options={{ 
+          title: 'Collection Summary',
+          presentation: 'modal',
+        }} 
+      />
+      <Stack.Screen 
+        name="shop/[id]" 
+        options={{ 
+          title: 'Products',
+        }} 
+      />
+      <Stack.Screen 
+        name="product/[id]" 
+        options={{ 
+          title: 'Product Details',
+        }} 
+      />
+    </Stack>
+    <CommandOverlay />
+    </View>
+    </CommandProvider>
   );
 }
