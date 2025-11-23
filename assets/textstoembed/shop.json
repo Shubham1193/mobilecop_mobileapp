@@ -1,0 +1,7 @@
+[
+  { "id": "1", "name": "Reliance Smart", "address": "123 Market Road", "itemsCollected": 0 },
+  { "id": "2", "name": "DMart", "address": "45 City Mall Avenue", "itemsCollected": 0 },
+  { "id": "3", "name": "Big Bazaar", "address": "78 Central Plaza", "itemsCollected": 0 },
+  { "id": "4", "name": "Spencer’s", "address": "21 Green Street", "itemsCollected": 0 },
+  { "id": "5", "name": "JioMart", "address": "5 Tech Park Road", "itemsCollected": 0 }
+]

@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "name": "Coca Cola 500ml",
+    "brand": "Coca Cola",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 2,
+    "name": "Pepsi 500ml",
+    "brand": "Pepsi",
+    "manufacturer": "PepsiCo",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 3,
+    "name": "Sprite 600ml",
+    "brand": "Sprite",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 4,
+    "name": "Thumbs Up 600ml",
+    "brand": "Thumbs Up",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 5,
+    "name": "Fanta Orange 500ml",
+    "brand": "Fanta",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 6,
+    "name": "Maaza Mango Drink 600ml",
+    "brand": "Maaza",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 7,
+    "name": "7UP 500ml",
+    "brand": "7UP",
+    "manufacturer": "PepsiCo",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 8,
+    "name": "Mountain Dew 500ml",
+    "brand": "Mountain Dew",
+    "manufacturer": "PepsiCo",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 9,
+    "name": "Mirinda Orange 500ml",
+    "brand": "Mirinda",
+    "manufacturer": "PepsiCo",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 10,
+    "name": "Limca 600ml",
+    "brand": "Limca",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 11,
+    "name": "Appy Fizz 500ml",
+    "brand": "Appy Fizz",
+    "manufacturer": "Parle Agro",
+    "category": "Beverage",
+    "image": null
+  },
+  {
+    "id": 12,
+    "name": "Sting Energy Drink",
+    "brand": "Sting",
+    "manufacturer": "PepsiCo",
+    "category": "Energy Drink",
+    "image": null
+  },
+  {
+    "id": 13,
+    "name": "Red Bull Energy Drink",
+    "brand": "Red Bull",
+    "manufacturer": "Red Bull GmbH",
+    "category": "Energy Drink",
+    "image": null
+  },
+  {
+    "id": 14,
+    "name": "Bisleri Water 1L",
+    "brand": "Bisleri",
+    "manufacturer": "Bisleri International",
+    "category": "Packaged Water",
+    "image": null
+  },
+  {
+    "id": 15,
+    "name": "Kinley Water 1L",
+    "brand": "Kinley",
+    "manufacturer": "The Coca-Cola Company",
+    "category": "Packaged Water",
+    "image": null
+  },
+  {
+    "id": 16,
+    "name": "Aquafina Water 1L",
+    "brand": "Aquafina",
+    "manufacturer": "PepsiCo",
+    "category": "Packaged Water",
+    "image": null
+  },
+  {
+    "id": 17,
+    "name": "B Natural Mixed Fruit Juice",
+    "brand": "B Natural",
+    "manufacturer": "ITC",
+    "category": "Juice",
+    "image": null
+  },
+  {
+    "id": 18,
+    "name": "Real Mango Juice",
+    "brand": "Real",
+    "manufacturer": "Dabur",
+    "category": "Juice",
+    "image": null
+  },
+  {
+    "id": 19,
+    "name": "Real Orange Juice",
+    "brand": "Real",
+    "manufacturer": "Dabur",
+    "category": "Juice",
+    "image": null
+  },
+  {
+    "id": 20,
+    "name": "Tropicana Orange Delight",
+    "brand": "Tropicana",
+    "manufacturer": "PepsiCo",
+    "category": "Juice",
+    "image": null
+  }
+]

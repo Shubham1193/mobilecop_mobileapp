@@ -1,9 +1,20 @@
 import CommandOverlay from '@/components/CommandOverlay';
 import { CommandProvider } from '@/context/CommandContext';
-import { Stack } from 'expo-router';
+import { Stack, useSegments } from 'expo-router';
 import { View } from 'react-native';
 
 export default function RootLayout() {
+
+
+  const segments = useSegments();
+  
+  // Determine page based on segments
+  let currentPage = 'all-shops';
+  if (segments[0] === 'shops') currentPage = 'all-shops';
+  else if (segments[0] === 'shop') currentPage = 'individual-shop';
+  else if (segments[0] === 'product') currentPage = 'individual-product';
+
+
   return (
     <CommandProvider>
       <View style={{ flex: 1 }}>
@@ -51,7 +62,7 @@ export default function RootLayout() {
         }} 
       />
     </Stack>
-    <CommandOverlay />
+    <CommandOverlay currentPage={currentPage} />
     </View>
     </CommandProvider>
   );

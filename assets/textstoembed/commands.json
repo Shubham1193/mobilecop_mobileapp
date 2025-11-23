@@ -1,0 +1,110 @@
+[
+  {
+    "index": 1,
+    "page": "all-shops",
+    "command": "search-for-shop-name",
+    "description": "Search and locate a shop by its full or partial name provided by the user, making it easy to quickly find the shop."
+  },
+  {
+    "index": 2,
+    "page": "all-shops",
+    "command": "collect-shop-details",
+    "description": "Start collecting all relevant details for the selected shop, including location, owner information, and other essential attributes."
+  },
+  {
+    "index": 3,
+    "page": "all-shops",
+    "command": "review-shop-details",
+    "description": "Read, review, and verify the stored details of the current shop to ensure all collected information is accurate and complete."
+  },
+  {
+    "index": 4,
+    "page": "all-shops",
+    "command": "next-shop",
+    "description": "Move to the next shop in the list to continue reviewing or collecting details in a sequential order efficiently."
+  },
+  {
+    "index": 5,
+    "page": "all-shops",
+    "command": "previous-shop",
+    "description": "Go back to the previous shop in the list for review or editing of previously entered shop details."
+  },
+  {
+    "index": 6,
+    "page": "individual-shop",
+    "command": "search-product",
+    "description": "Find a product by its name, brand, category, or manufacturer details to quickly locate specific items in the database."
+  },
+  {
+    "index": 7,
+    "page": "individual-shop",
+    "command": "next-product",
+    "description": "Move to the next product currently being viewed to continue reviewing or collecting additional product details."
+  },
+  {
+    "index": 8,
+    "page": "individual-shop",
+    "command": "previous-product",
+    "description": "Go back to the previous product being viewed for further review or editing of previously entered product details."
+  },
+  {
+    "index": 9,
+    "page": "individual-shop",
+    "command": "add-name",
+    "description": "Add or edit the product name "
+  },
+  {
+    "index": 10,
+    "page": "individual-shop",
+    "command": "add-brand",
+    "description": "Add or update the brand name of the product "
+  },
+  {
+    "index": 11,
+    "page": "individual-shop",
+    "command": "add-manufacturer",
+    "description": "Add or update the manufacturer information of the product to provide complete traceability of the item."
+  },
+  {
+    "index": 12,
+    "page": "individual-shop",
+    "command": "add-category",
+    "description": "Add or modify the product category, "
+  },
+  {
+    "index": 13,
+    "page": "individual-product",
+    "command": "add-price",
+    "description": "Enter product price accurately to reflect the current selling or collection price."
+  },
+  {
+    "index": 14,
+    "page": "individual-product",
+    "command": "add-quantity",
+    "description": "Add or update the product quantity, including package size or units available, to maintain correct inventory records."
+  },
+  {
+    "index": 15,
+    "page": "individual-shop",
+    "command": "add-information",
+    "description": "Add any additional information like price of product and quantity or description about the product, such as special notes, features, or remarks."
+  },
+  {
+    "index": 16,
+    "page": "individual-product",
+    "command": "save-details",
+    "description": "capture or save details ."
+  },
+  {
+    "index" : 17,
+    "page" : "individual-product",
+    "command" : "clear-filters",
+    "description": "Clear filters or remove filters"
+  },
+  {
+    "index" : 18,
+    "page" : "individual-shop",
+    "command" : "clear-filters",
+    "description": "Clear filters or remove filters"
+  }
+]

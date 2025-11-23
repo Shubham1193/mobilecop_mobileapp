@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -12,53 +13,14 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import Products from '../../assets/textstoembed/products.json';
 import { useCommand } from '../../context/CommandContext';
-
-// Mock product data
-const getProductById = (id: string) => {
-  const products: any = {
-    '1': { 
-      id: '1', 
-      name: 'Product A', 
-      category: 'Electronics', 
-      brand: 'Brand X', 
-      manufacturer: 'Manufacturer 1',
-      description: 'High-quality electronic product with advanced features.'
-    },
-    '2': { 
-      id: '2', 
-      name: 'Product B', 
-      category: 'Food', 
-      brand: 'Brand Y', 
-      manufacturer: 'Manufacturer 2',
-      description: 'Premium food product with natural ingredients.'
-    },
-    '3': { 
-      id: '3', 
-      name: 'Product C', 
-      category: 'Electronics', 
-      brand: 'Brand Z', 
-      manufacturer: 'Manufacturer 1',
-      description: 'Latest technology product for everyday use.'
-    },
-    '4': { 
-      id: '4', 
-      name: 'Product D', 
-      category: 'Beverages', 
-      brand: 'Brand X', 
-      manufacturer: 'Manufacturer 3',
-      description: 'Refreshing beverage with great taste.'
-    },
-  };
-  
-  return products[id] || null;
-};
+// import { Keyboard } from 'react-native';r
 
 export default function ProductDetailsScreen() {
   const router = useRouter();
   const { id: productId, shopId } = useLocalSearchParams();
-  
-  // Create Refs for inputs
+
   const priceRef = useRef<TextInput>(null);
   const quantityRef = useRef<TextInput>(null);
   const notesRef = useRef<TextInput>(null);
@@ -69,12 +31,24 @@ export default function ProductDetailsScreen() {
   const [notes, setNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Track active field for visual feedback
   const [activeField, setActiveField] = useState<string | null>(null);
-
+  const focusField = (field: string, ref: React.RefObject<TextInput>) => {
+    setActiveField(field);
+    // setTimeout(() => {
+    //     ref.current?.focus();
+    // }, 100);
+  };
   useEffect(() => {
-    const productData = getProductById(productId as string);
-    setProduct(productData);
+    if (productId) {
+      const productData = Products.find(p => String(p.id) === String(productId));
+      
+      if (productData) {
+        setProduct(productData);
+      } else {
+        Alert.alert("Error", "Product not found");
+        router.back();
+      }
+    }
   }, [productId]);
 
   const validateInputs = () => {
@@ -82,7 +56,7 @@ export default function ProductDetailsScreen() {
       Alert.alert('Validation Error', 'Please enter a price');
       return false;
     }
-    
+
     if (!quantity || quantity.trim() === '') {
       Alert.alert('Validation Error', 'Please enter a quantity');
       return false;
@@ -151,64 +125,27 @@ export default function ProductDetailsScreen() {
       ]
     );
   };
-
-  // ---------------------------------------------------------
-  // COMMAND HANDLER WITH TRIGGER SUPPORT
-  // ---------------------------------------------------------
   useCommand((cmd) => {
+    console.log("Product detail command received:", cmd);
     if (!cmd || cmd.trim() === '') return false;
 
-    // Check if it's a trigger:value format
-    const hasTrigger = cmd.includes(':');
-    
-    if (hasTrigger) {
-      // Parse trigger format: "price:150" or "search:Amul"
-      const [trigger, ...valueParts] = cmd.split(':');
-      const value = valueParts.join(':').trim(); // Rejoin in case value contains ":"
-      
-      const triggerLower = trigger.toLowerCase();
-
-      // Handle trigger-based input
-      switch (triggerLower) {
-        case 'price':
-          setPrice(value);
-          setActiveField('price');
-          priceRef.current?.focus();
-          console.log(`✅ Set price to: ${value}`);
-          return true;
-
-        case 'quantity':
-        case 'qty':
-          setQuantity(value);
-          setActiveField('quantity');
-          quantityRef.current?.focus();
-          console.log(`✅ Set quantity to: ${value}`);
-          return true;
-
-        case 'notes':
-        case 'note':
-          setNotes(value);
-          setActiveField('notes');
-          notesRef.current?.focus();
-          console.log(`✅ Set notes to: ${value}`);
-          return true;
-
-        case 'search':
-          // Handle search if needed in this screen
-          console.log(`🔍 Search triggered with: ${value}`);
-          return true;
-
-        default:
-          console.log(`⚠️ Unknown trigger: ${trigger}`);
-          return false;
-      }
-    }
-
-    // Handle plain commands (no trigger)
-    const c = cmd.toLowerCase();
+    const c = cmd.toLowerCase().trim();
 
     // --- ACTION COMMANDS ---
-    if (c === 'save' || c === 'submit' || c === 'done' || c === 'collect') {
+    if (c === "add-price") {
+      focusField('price', priceRef);
+      return true;
+    }
+    if (c === "add-quantity") {
+      focusField('quantity', quantityRef);
+      return true;
+    }
+    if (c === "add-note") {
+      focusField('notes', notesRef);
+      return true;
+    }
+
+    if (c === "save-details") {
       handleSave();
       return true;
     }
@@ -224,63 +161,41 @@ export default function ProductDetailsScreen() {
     }
 
     if (c === 'next') {
-      // Go to next product or save and continue
       handleSave();
       return true;
     }
 
-    // --- FOCUS COMMANDS (activate input mode) ---
-    if (c === 'price') {
-      setActiveField('price');
-      priceRef.current?.focus();
-      console.log('📝 Price input mode activated');
-      return true;
-    }
-
-    if (c === 'qty' || c === 'quantity') {
-      setActiveField('quantity');
-      quantityRef.current?.focus();
-      console.log('📝 Quantity input mode activated');
-      return true;
-    }
-
-    if (c === 'note' || c === 'notes') {
-      setActiveField('notes');
-      notesRef.current?.focus();
-      console.log('📝 Notes input mode activated');
-      return true;
-    }
-
-    // --- LEGACY: DIRECT DATA ENTRY (backward compatibility) ---
-    if (c.startsWith('price ')) {
-      const value = cmd.substring(6).trim();
+    // --- TRIGGER FORMAT SUPPORT ---
+    
+    // add-price:120
+    if (c.startsWith("add-price:")) {
+      const value = cmd.substring(cmd.indexOf(":") + 1).trim();
       setPrice(value);
-      setActiveField('price');
-      console.log(`✅ Set price to: ${value}`);
+      focusField('price', priceRef);
+      Keyboard.dismiss(); // Ensure keyboard closes if it was open
       return true;
     }
 
-    if (c.startsWith('qty ') || c.startsWith('quantity ')) {
-      const value = c.startsWith('qty ') ? cmd.substring(4).trim() : cmd.substring(9).trim();
+    // add-quantity:5
+    if (c.startsWith("add-quantity:")) {
+      const value = cmd.substring(cmd.indexOf(":") + 1).trim();
       setQuantity(value);
-      setActiveField('quantity');
-      console.log(`✅ Set quantity to: ${value}`);
+      focusField('quantity', quantityRef); 
+      Keyboard.dismiss(); // Ensure keyboard closes if it was open
       return true;
     }
 
-    if (c.startsWith('note ') || c.startsWith('notes ')) {
-      const value = c.startsWith('note ') ? cmd.substring(5).trim() : cmd.substring(6).trim();
+    // add-note:example text
+    if (c.startsWith("add-note:") || c.startsWith("notes:") || c.startsWith("note:")) {
+      const value = cmd.substring(cmd.indexOf(":") + 1).trim();
       setNotes(value);
-      setActiveField('notes');
-      console.log(`✅ Set notes to: ${value}`);
+      focusField('notes', notesRef);
       return true;
     }
+    
+    return false;
+  },"individual-product");
 
-    console.log(`❌ Unrecognized command: ${cmd}`);
-    return false; // Keep typing if not matched
-  });
-
-  // Clear active field after 2 seconds
   useEffect(() => {
     if (activeField) {
       const timer = setTimeout(() => setActiveField(null), 2000);
@@ -298,23 +213,26 @@ export default function ProductDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Product Information Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Product Information</Text>
-            
+
             <View style={styles.productHeader}>
               <View style={styles.productImagePlaceholder}>
-                <Text style={styles.productImageText}>
-                  {product.name.charAt(0)}
-                </Text>
+                 {product.image ? (
+                    <Image source={{ uri: product.image }} style={{width: 80, height: 80, borderRadius: 8}} />
+                 ) : (
+                    <Text style={styles.productImageText}>
+                      {product.name ? product.name.charAt(0) : '?'}
+                    </Text>
+                 )}
               </View>
               <View style={styles.productHeaderInfo}>
                 <Text style={styles.productName}>{product.name}</Text>
@@ -324,15 +242,15 @@ export default function ProductDetailsScreen() {
               </View>
             </View>
 
-            {product.description && (
+            {product.description ? (
               <Text style={styles.description}>{product.description}</Text>
-            )}
+            ) : null}
           </View>
 
           {/* Collection Form Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Collection Details</Text>
-            
+
             <View style={[
               styles.inputContainer,
               activeField === 'price' && styles.inputContainerActive
@@ -375,49 +293,18 @@ export default function ProductDetailsScreen() {
               />
             </View>
 
-            <View style={[
-              styles.inputContainer,
-              activeField === 'notes' && styles.inputContainerActive
-            ]}>
-              <Text style={styles.inputLabel}>
-                Notes {activeField === 'notes' && '🎙️'}
-              </Text>
-              <TextInput
-                ref={notesRef}
-                style={[
-                  styles.input,
-                  styles.textArea,
-                  activeField === 'notes' && styles.inputActive
-                ]}
-                placeholder="Say: notes"
-                value={notes}
-                onChangeText={setNotes}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-                placeholderTextColor="#999"
-              />
-            </View>
+            
           </View>
 
           <Text style={styles.requiredNote}>* Required fields</Text>
-          
+
           {/* Voice Command Help */}
-          <View style={styles.helpSection}>
-            <Text style={styles.helpTitle}>🎙️ Voice Commands:</Text>
-            <Text style={styles.helpText}>• "price" → activate price input</Text>
-            <Text style={styles.helpText}>• "quantity" → activate quantity input</Text>
-            <Text style={styles.helpText}>• "notes" → activate notes input</Text>
-            <Text style={styles.helpText}>• Then say the value (e.g., "150")</Text>
-            <Text style={styles.helpText}>• "save" or "collect" → save data</Text>
-            <Text style={styles.helpText}>• "next" → save and continue</Text>
-            <Text style={styles.helpText}>• "cancel" or "back" → go back</Text>
-          </View>
+       
         </ScrollView>
 
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.cancelButton}
             onPress={handleCancel}
             disabled={isSaving}
@@ -425,7 +312,7 @@ export default function ProductDetailsScreen() {
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
             onPress={handleSave}
             disabled={isSaving}
@@ -574,7 +461,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     position: 'absolute',
-    bottom: 0,
+    bottom: 150,
     left: 0,
     right: 0,
     flexDirection: 'row',

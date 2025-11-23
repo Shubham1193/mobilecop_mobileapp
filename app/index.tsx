@@ -2,26 +2,19 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+
 export default function WelcomeScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate model initialization
     const initializeApp = async () => {
       try {
-        // TODO: Initialize your ML model here
-        console.log('Initializing model...');
-        
-        // Simulate loading time
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        console.log('Model initialized successfully');
-        
-        // Navigate to shops page
+        console.log('Initializing App...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log('Initializing App...')
         router.replace('/shops');
       } catch (error) {
         console.error('Error initializing:', error);
-        // Still navigate even if there's an error (optional)
         router.replace('/shops');
       }
     };
@@ -31,16 +24,12 @@ export default function WelcomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Logo Container */}
       <View style={styles.logoContainer}>
-        {/* Replace with your actual logo */}
         <View style={styles.logoPlaceholder}>
-          <Text style={styles.logoText}>Your Logo</Text>
+          <Text style={styles.logoText}>NIQ</Text>
         </View>
         <Text style={styles.appName}>Product Collector</Text>
       </View>
-
-      {/* Loading Indicator */}
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.loadingText}>Initializing...</Text>
@@ -64,14 +53,14 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#ffffffff',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   logoText: {
-    color: '#fff',
-    fontSize: 20,
+    color: '#3160dfff',
+    fontSize: 30,
     fontWeight: 'bold',
   },
   appName: {

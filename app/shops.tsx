@@ -1,176 +1,165 @@
+
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import Fuse from 'fuse.js';
+import { useMemo, useRef, useState } from 'react';
 import {
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useCommand } from '../context/CommandContext'; // Make sure this path matches your file structure
+import Shops from '../assets/textstoembed/shop.json';
+import { useCommand } from '../context/CommandContext';
 
-const MOCK_SHOPS = [
-  { id: '1', name: 'Shop A', address: '123 Main St', category: 'Grocery', itemsCollected: 0 },
-  { id: '2', name: 'Shop B', address: '456 Oak Ave', category: 'Electronics', itemsCollected: 0 },
-  { id: '3', name: 'Shop C', address: '789 Pine Rd', category: 'Pharmacy', itemsCollected: 0 },
-  { id: '4', name: 'Shop D', address: '321 Elm St', category: 'Grocery', itemsCollected: 0 },
-];
+const MOCK_SHOPS = Shops;
 
-export default function ShopsScreen() {
+export default function ShopsScreen() { 
   const router = useRouter();
-  
-  // 1. Refs
-  const searchRef = useRef<TextInput>(null);
 
-  // 2. State
+  const searchRef = useRef<TextInput>(null);
+  const listRef = useRef<FlatList>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [shops, setShops] = useState(MOCK_SHOPS);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const filteredShops = shops.filter(shop =>
-    shop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    shop.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    shop.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const fuse = useMemo(() => {
+    const options = {
+      keys: ['name', 'address'],
+      threshold: 0.4,
+      includeScore: true,
+    };
+    return new Fuse(shops, options);
+  }, [shops]);
 
-  const selectedShop = filteredShops[selectedIndex];
+  const filteredShops = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return shops;
+    }
 
-  const handleCollect = () => {
-    if (!selectedShop) return;
-    router.push(`/shop/${selectedShop.id}`);
-  };
+    const searchResults = fuse.search(searchQuery);
+    return searchResults.map(result => result.item);
+  }, [searchQuery, shops, fuse]);
 
-  const handleReview = () => {
-    router.push('/review');
-  };
+  const selectedShop = filteredShops[selectedIndex] ?? null;
 
-  // ---------------------------------------------------------
-  // COMMAND HANDLER (Via Context Hook)
-  // ---------------------------------------------------------
   useCommand((cmd) => {
-    const c = cmd.toLowerCase();
+    const c = cmd.toLowerCase().trim();
 
-    // --- COMMAND: SEARCH ---
-    // Scenario A: "search" -> Focuses the box
-    if (c === "search") {
-        searchRef.current?.focus();
-        return true; // Clear command box
-    }
-    // Scenario B: "search <text>" -> Sets the search query directly
-    if (c.startsWith("search ")) {
-        const text = cmd.substring(7); // Keep original case
-        setSearchQuery(text);
-        searchRef.current?.focus();
-        return true; 
+    console.log("Command received in store page :", cmd);
+
+    if (c === "search-for-shop-name") {
+      searchRef.current?.focus();
+      return true;
     }
 
-    // --- COMMAND: NAVIGATION ---
-    if (c === "next" || c === "next") {
-        setSelectedIndex(prev => Math.min(prev + 1, filteredShops.length - 1));
-        return true;
+    if (c.startsWith("search-for-shop-name:")) {
+      const searchText = cmd.split(":")[1]?.trim() || "";
+      setSearchQuery(searchText);
+      setSelectedIndex(0);
+      searchRef.current?.focus();
+      return true;
     }
 
-    if (c === "previous" || c === "prev" || c === "p") {
-        setSelectedIndex(prev => Math.max(prev - 1, 0));
-        return true;
+    if (c === "next-shop") {
+      setSelectedIndex(prev => Math.min(prev + 1, filteredShops.length - 1));
+      return true;
     }
 
-    // --- COMMAND: ACTIONS ---
-    if (c === "collect" || c === "go" || c === "open") {
-        handleCollect();
-        return true;
+    if (c === "previous-shop") {
+      setSelectedIndex(prev => Math.max(prev - 1, 0));
+      return true;
     }
 
-    if (c === "review") {
-        handleReview();
-        return true;
+    if (c === "collect-shop-details" && selectedShop) {
+      router.push(`/shop/${selectedShop.id}`);
+      return true;
     }
 
-    // Return false if command not recognized (allows user to keep typing)
+    if (c === "review-shop-details") {
+      router.push('/review');
+      return true;
+    }
+
     return false;
-  });
+  } , "all-shops");
 
-  const renderShopCard = ({ item, index }: any) => (
-    <View style={[
-      styles.card,
-      index === selectedIndex && styles.cardSelected
-    ]}>
-      <View style={styles.cardContent}>
-        <View style={styles.shopIcon}>
-          <Text style={styles.shopIconText}>{item.name.charAt(0)}</Text>
-        </View>
+  const renderShopCard = ({ item, index }: { item: typeof MOCK_SHOPS[0], index: number }) => {
+    const isSelected = index === selectedIndex;
+    return (
+      <TouchableOpacity onPress={() => setSelectedIndex(index)}>
+        <View style={[
+          styles.card,
+          isSelected && styles.cardSelected
+        ]}>
+          <View style={styles.cardContent}>
+            <View style={styles.shopIcon}>
+              <Text style={styles.shopIconText}>{item.name.charAt(0)}</Text>
+            </View>
 
-        <View style={styles.shopInfo}>
-          <Text style={styles.shopName}>{item.name}</Text>
-          <Text style={styles.shopAddress}>{item.address}</Text>
-          <Text style={styles.shopCategory}>{item.category}</Text>
+            <View style={styles.shopInfo}>
+              <Text style={styles.shopName}>{item.name}</Text>
+              <Text style={styles.shopAddress}>{item.address}</Text>
+              <Text style={styles.shopItems}>Items Collected: {item.itemsCollected}</Text>
+            </View>
+          </View>
+
+          <View style={styles.cardButtons}>
+            <TouchableOpacity
+              style={[styles.bottomBtn, { backgroundColor: "#007AFF" }]}
+              onPress={() => router.push(`/shop/${item.id}`)}
+            >
+              <Text style={styles.bottomBtnText}>Collect</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.bottomBtn, { backgroundColor: "#34C759" }]}
+              onPress={() => router.push('/review')}
+            >
+              <Text style={styles.bottomBtnText}>Review</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 
-         We still use KeyboardAvoidingView so the list resizes
-         when the standard Search Bar is focused, or when the 
-         global command box pops up (since KAV detects keyboard height).
-      */}
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         {/* SEARCH HEADER */}
         <View style={styles.header}>
-            <TextInput
-                ref={searchRef}
-                style={styles.searchInput}
-                placeholder="Search shops..."
-                value={searchQuery}
-                onChangeText={(text) => {
-                    setSearchQuery(text);
-                    setSelectedIndex(0); // Reset selection on search
-                }}
-                placeholderTextColor="#999"
-            />
+          <TextInput
+            ref={searchRef}
+            style={styles.searchInput}
+            placeholder="Search shops..."
+            value={searchQuery}
+            onChangeText={(text) => {
+              setSearchQuery(text);
+              setSelectedIndex(0);
+            }}
+            placeholderTextColor="#999"
+          />
         </View>
 
         {/* SHOP LIST */}
         <FlatList
-            data={filteredShops}
-            renderItem={renderShopCard}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            extraData={selectedIndex}
+          ref={listRef}
+          data={filteredShops}
+          renderItem={renderShopCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          extraData={selectedIndex}
         />
-
-        {/* BOTTOM BUTTON BAR */}
-        <View style={styles.bottomBar}>
-            <TouchableOpacity 
-                style={[styles.bottomBtn, { backgroundColor: "#007AFF" }]}
-                onPress={handleCollect}
-            >
-                <Text style={styles.bottomBtnText}>Collect</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                style={[styles.bottomBtn, { backgroundColor: "#34C759" }]}
-                onPress={handleReview}
-            >
-                <Text style={styles.bottomBtnText}>Review</Text>
-            </TouchableOpacity>
-        </View>
       </KeyboardAvoidingView>
-
-      {/* 
-          NOTE: The Floating Overlay is gone from here! 
-          It is now handled globally in _layout.tsx 
-      */}
-
     </SafeAreaView>
   );
 }
@@ -191,11 +180,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-  listContent: { 
-      padding: 16, 
-      // We still need padding at bottom so the fixed Overlay 
-      // (which lives in Layout) doesn't visually block the last item.
-      paddingBottom: 100 
+  listContent: {
+    padding: 16,
+    paddingBottom: 100
   },
 
   card: {
@@ -203,11 +190,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     elevation: 2,
-    borderWidth: 2, 
+    borderWidth: 2,
     borderColor: 'transparent',
   },
   cardSelected: {
@@ -225,29 +209,22 @@ const styles = StyleSheet.create({
   shopInfo: { flex: 1 },
   shopName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
   shopAddress: { fontSize: 14, color: '#666' },
-  shopCategory: { fontSize: 14, color: '#999' },
+  shopItems: { fontSize: 14, color: '#999' },
 
-  // BOTTOM BAR
-  bottomBar: {
-    padding: 16,
-    paddingBottom: 20, // Lift up slightly
+  cardButtons: {
     flexDirection: 'row',
-    gap: 12,
-    backgroundColor: '#f5f5f5', // Match bg
+    gap: 10,
+    marginTop: 12,
   },
   bottomBtn: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   bottomBtnText: {
     color: '#fff',
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700'
   },
 });

@@ -15,3 +15,46 @@
     "expo-env.d.ts"
   ]
 }
+
+
+// if last command is input and we are not able to find the similar command in any means it is a text so then just pass as it is with some pointer like
+// it is a  normal text and component will use that to check if it is normal or command 
+
+
+  
+
+// How to Test This:
+
+//     Say "Next"
+
+//         Result: activeTrigger becomes null. App goes to next page.
+
+//     Say "Amul"
+
+//         Result: Ignored. Feedback says "Ignored (Select a field first)". (Because last command was 'Next').
+
+//     Say "Search"
+
+//         Result: activeTrigger becomes 'search'. Box highlights.
+
+//     Say "Amul"
+
+//         Result: Accepted! Sends search:amul to your context.
+
+//     Say "Next" (While still in search mode)
+
+//         Result: activeTrigger becomes null. Command overrides input. App goes to next page
+
+// 3. Test Scenarios (As Requested)
+// 
+// ✅ Say "Next" → activeTrigger = null, sends "next"
+// ✅ Say "Amul" → Ignored (no active field)
+// ✅ Say "Search" → activeTrigger = 'search', box highlights
+// ✅ Say "Amul" → Sends "search:Amul" to context
+// ✅ Say "Next" (while in search) → Overrides, clears trigger, sends "next"
+// 
+// 4. Visual Feedback
+// 
+// Orange border and background when in input mode
+// Shows "📝 Input Mode: SEARCH" when active
+// Color-coded status messages

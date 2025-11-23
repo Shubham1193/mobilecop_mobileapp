@@ -1,9 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import Fuse from 'fuse.js'; // <-- NEW: Import Fuse.js
+import { useEffect, useMemo, useRef, useState } from 'react'; // <-- Import useMemo
 import {
     FlatList,
     Image,
-    Keyboard, // Imported to dismiss keyboard on navigation
     KeyboardAvoidingView,
     Platform,
     SafeAreaView,
@@ -13,77 +13,64 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { useCommand } from '../../context/CommandContext'; // Ensure path is correct
-
-// Mock products data
-const MOCK_PRODUCTS = [
-    {
-        id: '1',
-        name: 'Product A',
-        category: 'Electronics',
-        brand: 'Brand X',
-        manufacturer: 'Manufacturer 1',
-        imageUrl: null
-    },
-    {
-        id: '2',
-        name: 'Product B',
-        category: 'Food',
-        brand: 'Brand Y',
-        manufacturer: 'Manufacturer 2',
-        imageUrl: null
-    },
-    {
-        id: '3',
-        name: 'Product C',
-        category: 'Electronics',
-        brand: 'Brand Z',
-        manufacturer: 'Manufacturer 1',
-        imageUrl: null
-    },
-    {
-        id: '4',
-        name: 'Product D',
-        category: 'Beverages',
-        brand: 'Brand X',
-        manufacturer: 'Manufacturer 3',
-        imageUrl: null
-    },
-];
+import Products from '../../assets/textstoembed/products.json';
+import { useCommand } from '../../context/CommandContext';
 
 export default function ShopProductsScreen() {
     const router = useRouter();
     const { id: shopId } = useLocalSearchParams();
 
-    // 1. Input Refs
     const nameRef = useRef<TextInput>(null);
     const categoryRef = useRef<TextInput>(null);
     const brandRef = useRef<TextInput>(null);
     const manufacturerRef = useRef<TextInput>(null);
     const listRef = useRef<FlatList>(null);
 
-    // 2. State
-    const [products, setProducts] = useState(MOCK_PRODUCTS);
+    const [products, setProducts] = useState(Products);
     const [nameFilter, setNameFilter] = useState('');
     const [categoryFilter, setCategoryFilter] = useState('');
     const [brandFilter, setBrandFilter] = useState('');
     const [manufacturerFilter, setManufacturerFilter] = useState('');
     const [selectedIndex, setSelectedIndex] = useState(0);
 
-    const filteredProducts = products.filter(product => {
-        const matchesName = product.name.toLowerCase().includes(nameFilter.toLowerCase());
-        const matchesCategory = product.category.toLowerCase().includes(categoryFilter.toLowerCase());
-        const matchesBrand = product.brand.toLowerCase().includes(brandFilter.toLowerCase());
-        const matchesManufacturer = product.manufacturer.toLowerCase().includes(manufacturerFilter.toLowerCase());
-        return matchesName && matchesCategory && matchesBrand && matchesManufacturer;
-    });
+    const fuse = useMemo(() => {
+        const options: Fuse.IFuseOptions<typeof Products[0]> = {
+            keys: ['name', 'category', 'brand', 'manufacturer'],
+            threshold: 0.4,
+            ignoreLocation: true,
+            distance: 1000,
+        };
+        return new Fuse(products, options);
+    }, [products]);
+    const filteredProducts = useMemo(() => {
+        const andQuery = [];
+        if (nameFilter.trim()) andQuery.push({ name: nameFilter.trim() });
+        if (categoryFilter.trim()) andQuery.push({ category: categoryFilter.trim() });
+        if (brandFilter.trim()) andQuery.push({ brand: brandFilter.trim() });
+        if (manufacturerFilter.trim()) andQuery.push({ manufacturer: manufacturerFilter.trim() });
 
-    // Reset selection on filter change
+        if (andQuery.length === 0) {
+            return products;
+        }
+
+        const searchResults = fuse.search({ $and: andQuery });
+
+        return searchResults.map(result => result.item);
+    }, [products, fuse, nameFilter, categoryFilter, brandFilter, manufacturerFilter]);
+
+
+    const selectedIndexRef = useRef(selectedIndex);
+    const filteredProductsRef = useRef(filteredProducts);
+
+    useEffect(() => {
+        selectedIndexRef.current = selectedIndex;
+        filteredProductsRef.current = filteredProducts;
+    }, [selectedIndex, filteredProducts]);
+
     useEffect(() => {
         setSelectedIndex(0);
     }, [nameFilter, categoryFilter, brandFilter, manufacturerFilter]);
 
-    // Scroll to selected item
     useEffect(() => {
         if (filteredProducts.length > 0 && listRef.current) {
             setTimeout(() => {
@@ -103,35 +90,38 @@ export default function ShopProductsScreen() {
         setManufacturerFilter('');
     };
 
-    const handleProductPress = (productId: string) => {
+    const handleProductPress = (productId: number) => {
+        console.log("Navigating to product:", productId);
         router.push({
             pathname: '/product/[id]',
             params: { id: productId, shopId: shopId as string }
         });
     };
 
-    // ---------------------------------------------------------
-    // NEW: REGISTER COMMANDS VIA HOOK
-    // ---------------------------------------------------------
     useCommand((cmd) => {
-        const c = cmd.toLowerCase();
+        console.log("coomamd recvied individual page")
+        const c = cmd.toLowerCase().trim();
+        console.log("Command received:", c);
 
-        // --- ACTION: COLLECT / OPEN ---
-        if (c === "collect-detail" || c === "collect" || c === "open" || c === "select" || c === "go") {
-            const selected = filteredProducts[selectedIndex];
-            if (selected) {
-                Keyboard.dismiss(); // Close keyboard before moving
-                handleProductPress(selected.id);
-                return true; // Clear command box
+        const currentList = filteredProductsRef.current;
+        const currentIndex = selectedIndexRef.current;
+
+        if (c === "add-information" || c === "add information") {
+            const selectedProduct = currentList[currentIndex];
+            if (selectedProduct) {
+                handleProductPress(selectedProduct.id);
+                return true;
             }
         }
+        if(c === 'clear-filters'){
+            clearFilters()
+        }
 
-        // --- NAVIGATION ---
-        if (c === "next" || c === "n") {
-            setSelectedIndex(prev => Math.min(prev + 1, filteredProducts.length - 1));
+        if (c === "next-product") {
+            setSelectedIndex(prev => Math.min(prev + 1, currentList.length - 1));
             return true;
         }
-        if (c === "prev" || c === "previous" || c === "p") {
+        if (c === "previous-product") {
             setSelectedIndex(prev => Math.max(prev - 1, 0));
             return true;
         }
@@ -139,51 +129,20 @@ export default function ShopProductsScreen() {
             router.back();
             return true;
         }
-        if (c === "clear") {
-            clearFilters();
-            return true;
-        }
+        if (c === "add-name") { nameRef.current?.focus(); return true; }
+        if (c === "add-category") { categoryRef.current?.focus(); return true; }
+        if (c === "add-brand") { brandRef.current?.focus(); return true; }
+        if (c === "add-manufacturer") { manufacturerRef.current?.focus(); return true; }
+        
+        if (c.startsWith("add-name:")) { setNameFilter(cmd.substring(cmd.indexOf(":") + 1).trim()); return true; }
+        if (c.startsWith("add-category:")) { setCategoryFilter(cmd.substring(cmd.indexOf(":") + 1).trim()); return true; }
+        if (c.startsWith("add-brand:")) { setBrandFilter(cmd.substring(cmd.indexOf(":") + 1).trim()); return true; }
+        if (c.startsWith("add-manufacturer:")) { setManufacturerFilter(cmd.substring(cmd.indexOf(":") + 1).trim()); return true; }
 
-        // --- FOCUS COMMANDS ---
-        if (c === "name") {
-            nameRef.current?.focus();
-            return true;
-        }
-        if (c === "cat" || c === "category") {
-            categoryRef.current?.focus();
-            return true;
-        }
-        if (c === "brand") {
-            brandRef.current?.focus();
-            return true;
-        }
-        if (c === "man" || c === "manufacturer") {
-            manufacturerRef.current?.focus();
-            return true;
-        }
+        return false;
+    }, "individual-shop");
 
-        // --- DIRECT SETTING COMMANDS ---
-        if (c.startsWith("name ")) {
-            setNameFilter(cmd.substring(5));
-            return true;
-        }
-        if (c.startsWith("cat ")) {
-            setCategoryFilter(cmd.substring(4));
-            return true;
-        }
-        if (c.startsWith("brand ")) {
-            setBrandFilter(cmd.substring(6));
-            return true;
-        }
-        if (c.startsWith("man ")) {
-            setManufacturerFilter(cmd.substring(4));
-            return true;
-        }
-
-        return false; // Keep typing if command not matched
-    });
-
-    const renderProductCard = ({ item, index }: { item: typeof MOCK_PRODUCTS[0], index: number }) => (
+    const renderProductCard = ({ item, index }: { item: typeof Products[0], index: number }) => (
         <TouchableOpacity
             style={[styles.card, index === selectedIndex && styles.cardSelected]}
             onPress={() => {
@@ -193,8 +152,8 @@ export default function ShopProductsScreen() {
             activeOpacity={0.7}
         >
             <View style={styles.productImageContainer}>
-                {item.imageUrl ? (
-                    <Image source={{ uri: item.imageUrl }} style={styles.productImage} resizeMode="cover" />
+                {item.image ? (
+                    <Image source={{ uri: item.image }} style={styles.productImage} resizeMode="cover" />
                 ) : (
                     <View style={[styles.productImagePlaceholder, index === selectedIndex && { backgroundColor: '#005BB5' }]}>
                         <Text style={styles.productImagePlaceholderText}>{item.name.charAt(0)}</Text>
@@ -212,10 +171,6 @@ export default function ShopProductsScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* 
-                KeyboardAvoidingView ensures the list pushes up when you 
-                type in the Filters or the Global Command Overlay.
-            */}
             <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={{ flex: 1 }}
@@ -223,40 +178,12 @@ export default function ShopProductsScreen() {
                 <View style={styles.filterContainer}>
                     <Text style={styles.filterTitle}>Filters</Text>
                     <View style={styles.filterRow}>
-                        <TextInput
-                            ref={nameRef}
-                            style={styles.filterInput}
-                            placeholder="Name (cmd: name)"
-                            value={nameFilter}
-                            onChangeText={setNameFilter}
-                            placeholderTextColor="#999"
-                        />
-                        <TextInput
-                            ref={categoryRef}
-                            style={styles.filterInput}
-                            placeholder="Category (cmd: cat)"
-                            value={categoryFilter}
-                            onChangeText={setCategoryFilter}
-                            placeholderTextColor="#999"
-                        />
+                        <TextInput ref={nameRef} style={styles.filterInput} placeholder="Name" value={nameFilter} onChangeText={setNameFilter} placeholderTextColor="#999" />
+                        <TextInput ref={categoryRef} style={styles.filterInput} placeholder="Category" value={categoryFilter} onChangeText={setCategoryFilter} placeholderTextColor="#999" />
                     </View>
                     <View style={styles.filterRow}>
-                        <TextInput
-                            ref={brandRef}
-                            style={styles.filterInput}
-                            placeholder="Brand (cmd: brand)"
-                            value={brandFilter}
-                            onChangeText={setBrandFilter}
-                            placeholderTextColor="#999"
-                        />
-                        <TextInput
-                            ref={manufacturerRef}
-                            style={styles.filterInput}
-                            placeholder="Manufacturer (cmd: man)"
-                            value={manufacturerFilter}
-                            onChangeText={setManufacturerFilter}
-                            placeholderTextColor="#999"
-                        />
+                        <TextInput ref={brandRef} style={styles.filterInput} placeholder="Brand" value={brandFilter} onChangeText={setBrandFilter} placeholderTextColor="#999" />
+                        <TextInput ref={manufacturerRef} style={styles.filterInput} placeholder="Manufacturer" value={manufacturerFilter} onChangeText={setManufacturerFilter} placeholderTextColor="#999" />
                     </View>
                     {(nameFilter || categoryFilter || brandFilter || manufacturerFilter) ? (
                         <TouchableOpacity style={styles.clearButton} onPress={clearFilters}>
@@ -269,7 +196,7 @@ export default function ShopProductsScreen() {
                     ref={listRef}
                     data={filteredProducts}
                     renderItem={renderProductCard}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={styles.listContent}
                     extraData={selectedIndex}
                     keyboardShouldPersistTaps="handled"
@@ -281,11 +208,10 @@ export default function ShopProductsScreen() {
                     }
                 />
             </KeyboardAvoidingView>
-
-            {/* NO LOCAL OVERLAY HERE - IT IS IN _layout.tsx */}
         </SafeAreaView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f5f5f5' },
@@ -315,10 +241,9 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     clearButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-    listContent: { 
-        padding: 16, 
-        // Extra padding at bottom to ensure the Global Overlay doesn't hide the last item
-        paddingBottom: 100 
+    listContent: {
+        padding: 16,
+        paddingBottom: 100
     },
     card: {
         backgroundColor: '#fff',
